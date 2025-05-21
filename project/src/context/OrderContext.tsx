@@ -37,7 +37,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [orders]);
 
   const importOrders = (excelData: any[]) => {
-    // Skip the first 3 rows (header)
     const dataStartingFromRow4 = excelData.slice(3);
     
     const newOrders: Order[] = dataStartingFromRow4.map(row => ({
@@ -62,26 +61,20 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const formatExcelDate = (dateStr: string) => {
     if (!dateStr) return '';
     
-    // Handle different date formats
     const parts = dateStr.split(/[/\-]/);
     if (parts.length !== 3) return '';
     
     let day, month, year;
     
-    // Check if the first part is a day (length <= 2) or a year (length == 4)
     if (parts[0].length === 4) {
-      // Format is YYYY-MM-DD
       [year, month, day] = parts;
     } else {
-      // Format is DD/MM/YYYY
       [day, month, year] = parts;
     }
     
-    // Ensure day and month are two digits
     day = day.padStart(2, '0');
     month = month.padStart(2, '0');
     
-    // Return in DD/MM/YYYY format
     return `${day}/${month}/${year}`;
   };
 
@@ -105,6 +98,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const processOrder = (orderId: string, userId: string, palletsProcessed: number, actualTotalPallets?: number) => {
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+    const formattedTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    const processedAt = `${formattedDate} ${formattedTime}`;
+
     setOrders(prev => prev.map(order => {
       if (order.id === orderId) {
         const newPalletsPrinted = Math.min(order.palletsPrinted + palletsProcessed, actualTotalPallets || order.pallets);
@@ -116,7 +114,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           pallets: finalTotalPallets,
           palletsPrinted: newPalletsPrinted,
           processed: isFullyProcessed,
-          userId: userId
+          userId: userId,
+          processedAt: isFullyProcessed ? processedAt : undefined
         };
       }
       return order;
@@ -126,10 +125,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteOrder = (orderId: string) => {
     setOrders(prev => prev.map(order => {
       if (order.id === orderId) {
+        const now = new Date();
+        const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+        const formattedTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         return {
           ...order,
           deleted: true,
-          deletedAt: new Date().toISOString()
+          deletedAt: `${formattedDate} ${formattedTime}`
         };
       }
       return order;
@@ -147,6 +149,15 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return order;
     }));
+  };
+
+  const permanentlyDeleteOrder = (orderId: string) => {
+    setOrders(prev => prev.filter(order => order.id !== orderId));
+  };
+
+  const clearAllData = () => {
+    setOrders([]);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
   const isPalletProcessingComplete = (order: Order) => {
@@ -169,7 +180,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       isPalletProcessingComplete,
       getRemainingPallets,
       deleteOrder,
-      restoreOrder
+      restoreOrder,
+      permanentlyDeleteOrder,
+      clearAllData
     }}>
       {children}
     </OrderContext.Provider>

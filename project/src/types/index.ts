@@ -3,7 +3,7 @@ export interface Order {
   queueNumber: string;   // Column B: Queue number
   storeNumber: string;   // Column C: Store number
   dockNumber: string;    // Column D: Dock number
-  deliveryDate: string;  // Column E: Delivery date (YYYY-MM-DD)
+  deliveryDate: string;  // Column E: Delivery date (DD/MM/YYYY)
   boxes: number;         // Column F: Ordered boxes
   pallets: number;       // Column G: Pallet forecast
   palletsPrinted: number; // Number of pallets already printed
@@ -11,6 +11,7 @@ export interface Order {
   userId?: string;       // User ID who processed the order
   deleted?: boolean;     // Whether the order has been deleted
   deletedAt?: string;    // When the order was deleted
+  processedAt?: string;  // When the order was processed
 }
 
 export interface QueueInfo {
@@ -40,4 +41,6 @@ export interface OrderContextType {
   getRemainingPallets: (order: Order) => number;
   deleteOrder: (orderId: string) => void;
   restoreOrder: (orderId: string) => void;
+  permanentlyDeleteOrder: (orderId: string) => void;
+  clearAllData: () => void;
 }

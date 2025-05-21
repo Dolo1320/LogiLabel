@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useOrderContext } from '../context/OrderContext';
-import { ChevronLeft, FileDown, Package, Trash2, RefreshCw } from 'lucide-react';
+import { ChevronLeft, FileDown, Package, Trash2, RefreshCw, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 const OrderSummaryPage: React.FC = () => {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
-  const { getOrdersByStatus, deleteOrder, restoreOrder } = useOrderContext();
+  const { getOrdersByStatus, deleteOrder, restoreOrder, permanentlyDeleteOrder } = useOrderContext();
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
@@ -49,8 +49,9 @@ const OrderSummaryPage: React.FC = () => {
       'Palets Procesados': order.palletsPrinted,
       'Estado': order.processed ? 'Procesado' : 'Pendiente',
       'Usuario': order.userId || '-',
+      'Fecha Procesado': order.processedAt || '-',
       'Eliminado': order.deleted ? 'Sí' : 'No',
-      'Fecha Eliminación': order.deletedAt ? new Date(order.deletedAt).toLocaleDateString() : '-'
+      'Fecha Eliminación': order.deletedAt || '-'
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -74,6 +75,13 @@ const OrderSummaryPage: React.FC = () => {
     if (window.confirm('¿Estás seguro de que quieres restaurar este pedido?')) {
       restoreOrder(orderId);
       setOrders(getOrdersByStatus(type as 'all' | 'processed' | 'pending' | 'deleted'));
+    }
+  };
+
+  const handlePermanentDelete = (orderId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar permanentemente este pedido? Esta acción no se puede deshacer.')) {
+      permanentlyDeleteOrder(orderId);
+      setOrders(getOrdersByStatus('deleted'));
     }
   };
 
@@ -112,6 +120,7 @@ const OrderSummaryPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cajas</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Palets</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Procesado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -135,6 +144,9 @@ const OrderSummaryPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {order.userId || '-'}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {order.processedAt || '-'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       order.processed 
@@ -145,23 +157,34 @@ const OrderSummaryPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {type === 'deleted' ? (
-                      <button
-                        onClick={() => handleRestoreOrder(order.id)}
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Restaurar pedido"
-                      >
-                        <RefreshCw size={18} />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleDeleteOrder(order.id)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Eliminar pedido"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
+                    <div className="flex space-x-2">
+                      {type === 'deleted' ? (
+                        <>
+                          <button
+                            onClick={() => handleRestoreOrder(order.id)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Restaurar pedido"
+                          >
+                            <RefreshCw size={18} />
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDelete(order.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="Eliminar permanentemente"
+                          >
+                            <XCircle size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteOrder(order.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Eliminar pedido"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

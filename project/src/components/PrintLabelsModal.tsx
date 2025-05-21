@@ -60,13 +60,17 @@ const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ orderId, onClose })
     const totalPallets = isLastBatch && actualTotalPallets !== null ? actualTotalPallets : order.pallets;
     
     for (let i = 0; i < palletsToProcess; i++) {
+      const currentPalletNumber = nextPalletNumber + i;
+      // Ensure we don't exceed the total pallets, even for decimal values
+      if (currentPalletNumber > totalPallets) break;
+      
       labels.push(
         <PalletLabel
           key={i}
           storeNumber={order.storeNumber}
           deliveryDate={order.deliveryDate}
           queueNumber={order.queueNumber}
-          palletNumber={nextPalletNumber + i}
+          palletNumber={currentPalletNumber}
           totalPallets={totalPallets}
           userId={userId}
           dockNumber={order.dockNumber}
@@ -119,7 +123,8 @@ const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ orderId, onClose })
                     value={actualTotalPallets || ''}
                     onChange={(e) => setActualTotalPallets(parseFloat(e.target.value))}
                     step="0.5"
-                    min={order.palletsPrinted + palletsToProcess}
+                    min={order.palletsPrinted + 0.5}
+                    max={Math.ceil(order.pallets)}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Introduce el número total real de palets"
                     disabled={processing}
@@ -138,7 +143,7 @@ const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ orderId, onClose })
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   disabled={processing || maxPalletsToProcess === 0}
                 >
-                  {maxPalletsToProcess >= 1 && <option value={1}>1 Palet</option>}
+                  {maxPalletsToProcess >= 0.5 && <option value={1}>1 Palet</option>}
                   {maxPalletsToProcess >= 2 && <option value={2}>2 Palets</option>}
                 </select>
               </div>

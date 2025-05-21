@@ -1,28 +1,40 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderContext } from '../context/OrderContext';
-import { Filter, Truck, Printer, Box, FileDown, Trash2 } from 'lucide-react';
+import { Filter, Truck, Printer, Box, FileDown, Trash2, XCircle } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { orders, queueList } = useOrderContext();
+  const { orders, queueList, clearAllData } = useOrderContext();
   const navigate = useNavigate();
 
-  // Get orders by queue
   const getQueueOrdersCount = (queueId: string) => {
     return orders.filter(order => order.queueNumber === queueId && !order.processed && !order.deleted).length;
   };
 
-  // Calculate summary statistics
   const totalOrders = orders.filter(order => !order.deleted).length;
   const processedOrders = orders.filter(order => order.processed && !order.deleted).length;
   const pendingOrders = totalOrders - processedOrders;
   const deletedOrders = orders.filter(order => order.deleted).length;
 
+  const handleClearAllData = () => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
+      clearAllData();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <button
+          onClick={handleClearAllData}
+          className="btn-primary bg-red-600 hover:bg-red-700 flex items-center space-x-2"
+        >
+          <XCircle size={18} />
+          <span>Vaciar Datos</span>
+        </button>
+      </div>
       
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div 
           className="card p-4 flex items-center space-x-4 cursor-pointer hover:shadow-lg transition-shadow"
@@ -77,7 +89,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Queue List */}
       <div className="card p-4">
         <h2 className="text-xl font-semibold mb-4">Colas de Pedidos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -19,11 +19,6 @@ const PalletLabel: React.FC<PalletLabelProps> = ({
   userId,
   dockNumber
 }) => {
-  const formatDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
-  
   const getQueueName = (id: string) => {
     const queueMap: Record<string, string> = {
       '10': '4ª GAMA',
@@ -62,7 +57,7 @@ const PalletLabel: React.FC<PalletLabelProps> = ({
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <p className="text-sm font-semibold">Fecha de Factura:</p>
-          <p className="text-xl">{formatDate(deliveryDate)}</p>
+          <p className="text-xl">{deliveryDate}</p>
         </div>
         
         <div>
